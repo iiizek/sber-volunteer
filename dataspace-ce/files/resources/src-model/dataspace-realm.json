@@ -1,0 +1,9 @@
+{
+  "realm": "dataspace",
+  "enabled": true,
+  "users": [],
+  "clients": [],
+  "roles": {
+    "realm": []
+  }
+}
