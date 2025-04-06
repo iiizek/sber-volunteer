@@ -57,8 +57,6 @@ services:
     depends_on:
       keycloak-db:
         condition: service_healthy
-    volumes:
-      - ../files/resources/src-model/dataspace-realm.json:/opt/keycloak/data/import/realm.json
     networks:
       - dataspace_network
 

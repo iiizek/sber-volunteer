@@ -1,47 +1,56 @@
-import 'antd/dist/antd.css';
-import React, { useEffect, useState } from 'react';
-import { ApolloClient, ApolloProvider, NormalizedCacheObject } from '@apollo/client';
-import { cache } from './cache'
-
-import { MainMenu } from './components/__generate/MainMenu';
+import React from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { MainLayout } from './components/layouts/MainLayout';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { OrganizerDashboard } from './components/organizer/OrganizerDashboard';
+import { VolunteerDashboard } from './components/volunteer/VolunteerDashboard';
+import { LoginPage } from './components/auth/LoginPage';
+import { HomePage } from './components/HomePage';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { UnauthorizedPage } from './components/auth/UnauthorizedPage';
 
 export const App: React.FC = () => {
-  const [apolloClient, setAppoloClient] = useState<ApolloClient<NormalizedCacheObject>>()
+	return (
+		<BrowserRouter>
+			<Routes>
+				<Route path='/' element={<MainLayout />}>
+					<Route index element={<HomePage />} />
 
-  const initEnv = async () => {
-    const res = await fetch("/env.json")
-    const json = JSON.parse(await res.text())
-    process.env.DS_ENDPOINT = json.DS_ENDPOINT
-  }
+					{/* Защищенные маршруты администратора */}
+					<Route
+						path='admin/*'
+						element={
+							<ProtectedRoute requiredRoles={['admin']}>
+								<AdminDashboard />
+							</ProtectedRoute>
+						}
+					/>
 
-  const initClient = async () => {
-    if (process.env.NODE_ENV === 'production')
-      await initEnv()
+					{/* Защищенные маршруты организатора */}
+					<Route
+						path='organizer/*'
+						element={
+							<ProtectedRoute requiredRoles={['organization']}>
+								<OrganizerDashboard />
+							</ProtectedRoute>
+						}
+					/>
 
-    if (!apolloClient) {
-      return new ApolloClient({
-        cache: cache,
-        uri: process.env.NODE_ENV === 'production' ? process.env.DS_ENDPOINT : '/graphql',
-      })
-    }
-  }
+					{/* Защищенные маршруты волонтера */}
+					<Route
+						path='volunteer/*'
+						element={
+							<ProtectedRoute requiredRoles={['volonteer']}>
+								<VolunteerDashboard />
+							</ProtectedRoute>
+						}
+					/>
 
-  useEffect(() => {
-    const appoloClientInit = async () => {
-      const apolloClient = await initClient()
-      setAppoloClient(apolloClient)
-    }
-
-    appoloClientInit()
-    
-  }, [])
-
-  if (apolloClient)
-  return (
-    <ApolloProvider client={apolloClient}>
-      <MainMenu />
-    </ApolloProvider>
-  )
-
-  return (<>{"Loading..."}</>)
-}
+					{/* Страница с ошибкой авторизации */}
+					<Route path='unauthorized' element={<UnauthorizedPage />} />
+				</Route>
+				<Route path='/login' element={<LoginPage />} />
+			</Routes>
+		</BrowserRouter>
+	);
+};
